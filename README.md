@@ -20,6 +20,11 @@ composer install
 or
 composer install --ignore-platform-reqs
 ```
+Copy the **.env.example** file in ***.env***
+or just run this command
+```
+cp .env.example .env
+```
 Next update the ***.env*** file
 
 Change these keys in the **.env** file
