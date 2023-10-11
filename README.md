@@ -7,60 +7,164 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## Clone and App run process
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Basic requirements
+-  PHP versions 8.1
+-  composer
+-  MySQL 8.* (any versions)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```
+git clone 
+composer install 
+or
+composer install --ignore-platform-reqs
+```
+Next update the ***.env*** file
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Change these keys in the **.env** file
 
-## Learning Laravel
+```
+APP_URL=http://127.0.0.1:8000 # change this line app run URL
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel_livewire_crud
+DB_USERNAME={user_name}
+DB_PASSWORD={password}
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Now run the migrate and app run command via the terminal
+```
+php artisan migrate
+php artisan serve
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Code line 
 
-## Laravel Sponsors
+First, install the livewire package
+```
+composer require livewire/livewire
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+Then create a component for users
+```
+php artisan make:livewire users
+```
 
-### Premium Partners
+Now they created fies on both path:
+```
+app/Http/Livewire/Users.php
+resources/views/livewire/users.blade.php
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+Update Component File
 
-## Contributing
+#### Here, we will write render(), resetInputFields(), store(), edit(), cancel(), update() and delete() method for our crud app.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+So, let's update the following file ```App\Livewire\Users```.
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```
+<?php
 
-## Security Vulnerabilities
+namespace App\Livewire;
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+use Livewire\Component;
+use App\Models\User;
 
-## License
+class Users extends Component
+{
+    public $users, $name, $email, $user_id;
+    public $updateMode = false;
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    public function render()
+    {
+        $this->users = User::all();
+        return view('livewire.users');
+    }
+
+    private function resetInputFields(){
+        $this->name = '';
+        $this->email = '';
+    }
+
+    public function store()
+    {
+        $validatedDate = $this->validate([
+            'name' => 'required',
+            'email' => 'required|email',
+        ]);
+
+        User::create($validatedDate);
+
+        session()->flash('message', 'Users Created Successfully.');
+
+        $this->resetInputFields();
+
+        // $this->emit('userStore'); // Close model to using to jquery
+
+    }
+
+    public function edit($id)
+    {
+        $this->updateMode = true;
+        $user = User::where('id',$id)->first();
+        $this->user_id = $id;
+        $this->name = $user->name;
+        $this->email = $user->email;
+
+    }
+
+    public function cancel()
+    {
+        $this->updateMode = false;
+        $this->resetInputFields();
+
+
+    }
+
+    public function update()
+    {
+        $validatedDate = $this->validate([
+            'name' => 'required',
+            'email' => 'required|email',
+        ]);
+
+        if ($this->user_id) {
+            $user = User::find($this->user_id);
+            $user->update([
+                'name' => $this->name,
+                'email' => $this->email,
+            ]);
+            $this->updateMode = false;
+            session()->flash('message', 'Users Updated Successfully.');
+            $this->resetInputFields();
+
+        }
+    }
+
+    public function delete($id)
+    {
+        if($id){
+            User::where('id',$id)->delete();
+            session()->flash('message', 'Users Deleted Successfully.');
+        }
+    }
+}
+```
+
+#### You can check the blade files code from here
+- [blade template](https://github.com/AtiqurCode/laravel-livewire-crud/tree/master/resources/views/livewire)
+  
+You need to add home, users, create, update .blade.php file for full crud operations
+
+#### update the web.php file
+
+```
+Route::view('users', 'livewire.home');
+```
+
+Now you can do crud operations from 
+**APP_URL/users** or **127.0.0.1:8000/users**
